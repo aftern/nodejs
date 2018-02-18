@@ -1,14 +1,33 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var fs = require('fs');
+var multer = require('multer');
+var _storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    }
+});
+var upload = multer({ storage: _storage});
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.locals.pretty = true;
+app.use('/user', express.static('uploads'));
 app.set('views', './views_file');
 app.set('view engine', 'pug');
 app.listen(3333, function(){
     console.log('conneted, 3333 port!');
 });
+
+app.get('/upload', function(req, res){
+	res.render('upload');
+});
+app.post('/upload', upload.single('userfile'), function(req, res){
+    console.log(req.file);
+    res.send('uploaded : '+ req.file.filename);
+})
 
 app.get('/topic/new', function(req, res){
     fs.readdir('data', function(err, files){
@@ -51,6 +70,6 @@ app.post('/topic', function(req, res){
             console.log(err);
             res.status(500).send('Internal Server Error');
         }
-        res.redirect('topic/'+title);
+       res.redirect('topic/'+title);
     })
 });
