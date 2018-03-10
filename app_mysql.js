@@ -1,5 +1,11 @@
 var express = require('express');
+var app = express();
+//As req.body's shape is based on user-controlled input, 
+//all properties and values in this object are untrusted and should be validated 
+//before trusting.
 var bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+
 var fs = require('fs');
 
 //mysql 기본문
@@ -22,8 +28,6 @@ var _storage = multer.diskStorage({
     }
 });
 var upload = multer({ storage: _storage});
-var app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
 app.locals.pretty = true;
 app.use('/user', express.static('uploads'));
 /*
