@@ -1,3 +1,4 @@
+//express 템플릿 이용
 var express = require('express');
 var app = express();
 //As req.body's shape is based on user-controlled input, 
@@ -37,6 +38,7 @@ view engine, 사용할 템플리트 엔진. 예: app.set('view engine', 'pug')
 */
 app.set('views', './views_mysql');
 app.set('view engine', 'pug');
+//3333번 포트 잘 열리는지 로그 확인
 app.listen(3333, function(){
     console.log('conneted, 3333 port!');
 });

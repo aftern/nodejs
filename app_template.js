@@ -1,3 +1,4 @@
+//express 템플릿 이용
 var express = require('express');
 var app = express();
 app.listen(3003, function(){
