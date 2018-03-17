@@ -20,6 +20,14 @@ app.use(session({
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 
+//사용자의 pw를 암호화시키기 위한 미들웨어 포함 -> md5(단방향 해시)
+//var md5 = require('md5');
+//사용자의 pw를 암호화시키기 위한 미들웨어 포함 -> sha256(단방향 해시)
+//var sha256 = require('sha256');
+//암호화 방식 중 해시함수를 수천번 돌리는 방식
+var bkfd2Password = require("pbkdf2-password");
+var hasher = bkfd2Password();
+
 //3003번 포트 잘 열리는지 로그 확인
 app.listen(3003, function(){
     console.log('Connected 3003 port!!!');
@@ -28,7 +36,8 @@ app.listen(3003, function(){
 var users = [
     {
         identification:'hongs',
-        password:'1111',
+        password:'disfOrnSUUdUXuoFQNy9Y1LtXgIf9QHZpxU+dpIZRw7pNapYAj0d5D0YWZSgN0Vs9GDYDmLDiDpjEMJh8PQlyb/VcQRCGP7NA0QmJBoIsaEWNMP0A/r+qzJSpOWqPEfPz52b0JIrXD8Rry5pTOmaZRN5BmACzvu5J5EyI6iV5YQ=',
+        salt:'pFXKMQuDB4nmKc3uhNOwFAIv2ka+MBEQUjm3duWepnQSU0DkCl8s7avK8M75qrG0Q8cnBAFvdhwsqpzzandbJA==',
         nickname:"Hongs"
     }
 ];
@@ -53,16 +62,19 @@ app.get('/auth/register', function(req, res){
     res.send(output);
 });
 app.post('/auth/register', function(req, res){
-    var user = {
-        identification:req.body.identification,
-        password:req.body.password,
-        nickname:req.body.nickname
-    };
-    users.push(user);
-    req.session.displayName = req.body.nickname;
-    req.session.save(function(){
-        res.redirect('/welcome');
-    })
+    hasher({password:req.body.password}, function(err, pass, salt, hash){
+        var user = {
+            identification:req.body.identification,
+            password:hash,
+            salt:salt,
+            nickname:req.body.nickname
+        };
+        users.push(user);
+        req.session.displayName = req.body.nickname;
+        req.session.save(function(){
+            res.redirect('/welcome');
+        })
+    });
 })
 
 app.get('/auth/login', function(req, res){
@@ -88,12 +100,26 @@ app.post('/auth/login', function(req, res){
     var pwd = req.body.password;
     for(var i=0; i<users.length; i++){
         var user = users[i];
-        if(id === user.identification && pwd === user.password){
+        console.log(user.identification);
+        console.log(id);
+        if(id === user.identification){
+            return hasher({password:pwd, salt:user.salt}, function(err, pass, salt, hash){
+                if(hash === user.password){
+                    req.session.displayName = user.nickname;
+                    req.session.save(function(){
+                        res.redirect('/welcome');
+                    })
+                } else{
+                    res.send('who are u <br><a href="/auth/login">login</a>');
+                }
+            });
+        }
+        /*if(id === user.identification && sha256(pwd+user.salt) === user.password){
             req.session.displayName = user.nickname;
             return req.session.save(function(){
                 res.redirect('/welcome');
             });
-        } 
+        } */
     }
     res.send('Who are u <br><a href="/auth/login">login</a>');
 });
